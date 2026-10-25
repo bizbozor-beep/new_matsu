@@ -1,3 +1,4 @@
+{% load tz %}
 <!doctype html>
 <html lang="uz">
 <head>
@@ -427,7 +428,7 @@
             text-shadow: none;
         }
 
-        .phone-badge {
+        .telegram-badge {
             font-family: monospace;
             background: rgba(255, 255, 255, 0.05);
             padding: 4px 8px;
@@ -747,9 +748,9 @@
 
         <!-- Page Hero -->
         <section class="hero">
-            <p class="eyebrow">ADMIN BO'LIMI</p>
+            <p class="eyebrow">RO'YXAT OCHIQ</p>
             <h1>Turnir Ishtirokchilari</h1>
-            <p>Ishtirokchilar ro'yxatini ko'rish hamda ma'lumotlarni eksport qilish boshqaruvi.</p>
+            <p>Turnirga ro'yxatdan o'tganlar va ro'yxatdan o'tgan vaqtini ko'ring.</p>
         </section>
 
         <!-- Main Content Card -->
@@ -759,14 +760,14 @@
                 <div class="dashboard-header">
                     <div class="dashboard-title-group">
                         <h2>
-                            Ro'yxatdan o'tganlar
-                            <span class="badge-count">{{ participants|length }} ta ishtirokchi</span>
+                            Ishtirokchilar
+                            <span class="badge-count">Jami {{ participants|length }} ta</span>
                         </h2>
                     </div>
 
                     <div class="session-timer">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                        <span>Sessiya: 15 min aktiv</span>
+                        <span>Barcha uchun ochiq</span>
                     </div>
                 </div>
 
@@ -775,7 +776,7 @@
                     <div class="controls-bar">
                         <div class="search-input-wrapper">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                            <input type="text" id="searchInput" class="search-input" placeholder="Ishtirokchini qidirish (Username, Email, Tel)..." onkeyup="filterParticipants()">
+                            <input type="text" id="searchInput" class="search-input" placeholder="Roblox username qidirish..." onkeyup="filterParticipants()">
                         </div>
                     </div>
 
@@ -785,9 +786,11 @@
                             <thead>
                                 <tr>
                                     <th>Roblox Username</th>
-                                    <th>Email</th>
-                                    <th>Telefon Raqami</th>
-                                    <th>Amal</th>
+                                    <th>Ro'yxatdan o'tgan vaqt</th>
+                                    <th>Telegram Username</th>
+                                    {% if admin_confirmed %}
+                                        <th>Amal</th>
+                                    {% endif %}
                                 </tr>
                             </thead>
                             <tbody>
@@ -801,26 +804,22 @@
                                                 <span>{{ participant.Roblox_username }}</span>
                                             </div>
                                         </td>
-                                        <td>{{ participant.roblox_email }}</td>
-                                        <td>
-                                            {% if participant.phone_number %}
-                                                <span class="phone-badge">{{ participant.phone_number }}</span>
-                                            {% else %}
-                                                <span style="color: var(--text-muted);">-</span>
-                                            {% endif %}
-                                        </td>
-                                        <td>
-                                            <a class="button button-secondary participant-edit-button" href="{% url 'edit_participant' participant.pk %}">
-                                                Edit
-                                            </a>
-                                        </td>
+                                        <td>{{ participant.registered_at|localtime|date:"d.m.Y H:i" }}</td>
+                                        <td>{{ participant.telegram_username|default:"-" }}</td>
+                                        {% if admin_confirmed %}
+                                            <td>
+                                                <a class="button button-secondary participant-edit-button" href="{% url 'edit_participant' participant.pk %}">
+                                                    Edit
+                                                </a>
+                                            </td>
+                                        {% endif %}
                                     </tr>
                                 {% endfor %}
                             </tbody>
                         </table>
                     </div>
 
-                    <!-- JSON Export Form -->
+                    {% if admin_confirmed %}
                     <form method="post" class="export-card">
                         {% csrf_token %}
                         <h3>
@@ -828,14 +827,9 @@
                             JSON Faylni Yuklab Olish
                         </h3>
                         <p class="card-description">
-                            Ishtirokchilar ro'yxatini va ularning bog'lanish ma'lumotlarini JSON formatida yuklab olishingiz mumkin.
+                            Ishtirokchilar ro'yxatini Roblox va Telegram username bilan JSON formatida yuklab oling.
                         </p>
                         
-                        <label class="checkbox-field" for="include-phone">
-                            <input id="include-phone" type="checkbox" name="include_phone" checked>
-                            JSON faylga telefon raqamlarini ham kiritish
-                        </label>
-
                         <div>
                             <button class="button button-primary" type="submit" name="action" value="export">
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
@@ -843,6 +837,7 @@
                             </button>
                         </div>
                     </form>
+                    {% endif %}
                 {% else %}
                     <!-- Empty State -->
                     <div class="empty-state">
@@ -851,7 +846,9 @@
                     </div>
                 {% endif %}
 
-            {% else %}
+            {% endif %}
+
+            {% if request.user.is_authenticated and request.user.is_staff and not admin_confirmed %}
                 <!-- Admin Password Confirmation Box -->
                 <div class="auth-box">
                     <div class="auth-icon">
@@ -859,11 +856,12 @@
                     </div>
                     <h2>Admin Tasdiqlash</h2>
                     <p class="card-description" style="margin-bottom: 24px;">
-                        Ishtirokchilar ma'lumotlarini ko'rish uchun maxfiy admin parolini kiriting.
+                        Telegram username ko'rish, tahrirlash va JSON yuklash uchun admin parolini tasdiqlang.
                     </p>
 
                     <form method="post" class="registration-form">
                         {% csrf_token %}
+                        <input type="hidden" name="action" value="confirm">
                         
                         <div class="form-field">
                             {{ form.as_p }}
@@ -871,7 +869,7 @@
 
                         <button class="button button-primary" type="submit" style="width: 100%; margin-top: 10px;">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                            Tasdiqlash va Ko'rish
+                            Tasdiqlash
                         </button>
                     </form>
                 </div>

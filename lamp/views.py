@@ -1,6 +1,6 @@
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm
-from django.contrib import messages
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -72,21 +72,20 @@ def home(request):
     )
 
 
-@login_required
 def matsu(request):
-    if not request.user.is_staff:
-        return redirect(f"{reverse('admin:login')}?next={request.path}")
-
+    is_staff = request.user.is_authenticated and request.user.is_staff
     confirmation = request.session.get(MATSU_CONFIRMATION_SESSION_KEY)
-    confirmed = confirmation == [
+    admin_confirmed = is_staff and confirmation == [
         request.user.pk,
         request.user.get_session_auth_hash(),
     ]
-    if not confirmed:
+    if is_staff and not admin_confirmed:
         request.session.pop(MATSU_CONFIRMATION_SESSION_KEY, None)
 
     form = MatsuPasswordForm()
-    if request.method == "POST" and request.POST.get("action") != "export":
+    if request.method == "POST" and request.POST.get("action") == "confirm":
+        if not is_staff:
+            return redirect("matsu")
         form = MatsuPasswordForm(request.POST)
         if form.is_valid():
             if request.user.check_password(form.cleaned_data["password"]):
@@ -95,26 +94,26 @@ def matsu(request):
                     request.user.get_session_auth_hash(),
                 ]
                 request.session.set_expiry(900)
-                confirmed = True
+                admin_confirmed = True
             else:
                 form.add_error("password", "Parol noto'g'ri.")
 
-    participants = RobloxUser.objects.order_by("Roblox_username") if confirmed else ()
+    participants = RobloxUser.objects.order_by("-registered_at", "Roblox_username")
 
     if (
         request.method == "POST"
         and request.POST.get("action") == "export"
-        and confirmed
     ):
-        include_phone = request.POST.get("include_phone") == "on"
+        if not admin_confirmed:
+            return redirect("matsu")
+
         data = []
         for participant in participants:
             row = {
                 "roblox_username": participant.Roblox_username,
-                "email": participant.roblox_email,
+                "telegram_username": participant.telegram_username,
+                "registered_at": participant.registered_at.isoformat(),
             }
-            if include_phone:
-                row["phone_number"] = participant.phone_number
             data.append(row)
 
         response = JsonResponse(
@@ -132,7 +131,8 @@ def matsu(request):
         request,
         "matsu.html",
         {
-            "confirmed": confirmed,
+            "confirmed": True,
+            "admin_confirmed": admin_confirmed,
             "form": form,
             "participants": participants,
         },

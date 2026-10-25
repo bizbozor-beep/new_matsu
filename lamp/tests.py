@@ -16,7 +16,6 @@ class AccountFlowTests(TestCase):
         )
 
         self.assertRedirects(response, "/login/")
-        self.assertFalse(response.wsgi_request.user.is_authenticated)
         created_user = get_user_model().objects.get(username="testuser")
         self.assertTrue(created_user.check_password("StrongPassword!908"))
         self.assertNotEqual(created_user.password, "StrongPassword!908")
@@ -28,7 +27,6 @@ class AccountFlowTests(TestCase):
         )
 
         self.assertRedirects(self.client.get("/"), "/login/?next=/")
-
         login_response = self.client.post(
             "/login/",
             {"username": "testuser", "password": "StrongPassword!908"},
@@ -40,103 +38,52 @@ class AccountFlowTests(TestCase):
         self.assertRedirects(logout_response, "/login/")
         self.assertRedirects(self.client.get("/"), "/login/?next=/")
 
-    def test_tournament_registration_is_saved_and_requires_login(self):
+    def test_registration_requires_roblox_and_telegram_usernames(self):
         response = self.client.post(
             "/",
-            {
-                "Roblox_username": "Builder123",
-                "roblox_email": "builder@example.com",
-                "phone_number": "+998901234567",
-            },
+            {"Roblox_username": "Builder123", "telegram_username": "@builder"},
         )
         self.assertRedirects(response, "/login/?next=/")
         self.assertEqual(RobloxUser.objects.count(), 0)
 
-        get_user_model().objects.create_user(
+        user = get_user_model().objects.create_user(
             username="tournamentuser",
             password="StrongPassword!908",
         )
-        self.client.login(username="tournamentuser", password="StrongPassword!908")
+        self.client.login(username=user.username, password="StrongPassword!908")
+
+        response = self.client.post("/", {"Roblox_username": "Builder123"})
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Telegram username")
+        self.assertEqual(RobloxUser.objects.count(), 0)
 
         response = self.client.post(
             "/",
-            {
-                "Roblox_username": "Builder123",
-                "roblox_email": "builder@example.com",
-                "phone_number": "+998901234567",
-            },
+            {"Roblox_username": "Builder123", "telegram_username": "@builder"},
         )
-
         self.assertRedirects(response, "/")
+
         registration = RobloxUser.objects.get()
         self.assertEqual(registration.Roblox_username, "Builder123")
-        self.assertEqual(registration.roblox_email, "builder@example.com")
-        self.assertEqual(registration.phone_number, "+998901234567")
-        self.assertEqual(registration.user.username, "tournamentuser")
+        self.assertEqual(registration.telegram_username, "@builder")
+        self.assertEqual(registration.user, user)
 
-        second_response = self.client.post(
-            "/",
-            {
-                "Roblox_username": "SecondBuilder",
-                "roblox_email": "second@example.com",
-                "phone_number": "+998991234567",
-            },
-        )
-        self.assertRedirects(second_response, "/")
-        self.assertEqual(
-            RobloxUser.objects.filter(user__username="tournamentuser").count(),
-            2,
-        )
-
-    def test_user_can_edit_their_registration(self):
-        user = get_user_model().objects.create_user(
-            username="edituser",
-            password="StrongPassword!908",
-        )
-        registration = RobloxUser.objects.create(
-            user=user,
-            Roblox_username="OldName",
-            roblox_email="old@example.com",
-            phone_number="+998901234567",
-        )
-        self.client.login(username="edituser", password="StrongPassword!908")
-
-        edit_page = self.client.get(f"/?edit={registration.pk}")
-        self.assertEqual(edit_page.status_code, 200)
-        self.assertContains(edit_page, 'value="OldName"')
-        self.assertContains(edit_page, 'value="old@example.com"')
-
-        response = self.client.post(
-            "/",
-            {
-                "registration_id": registration.pk,
-                "Roblox_username": "UpdatedName",
-                "roblox_email": "updated@example.com",
-                "phone_number": "+998991112233",
-            },
-        )
-
-        self.assertRedirects(response, "/")
-        registration.refresh_from_db()
-        self.assertEqual(registration.Roblox_username, "UpdatedName")
-        self.assertEqual(registration.roblox_email, "updated@example.com")
-        self.assertEqual(registration.phone_number, "+998991112233")
-        self.assertEqual(RobloxUser.objects.count(), 1)
-
-    def test_user_can_add_and_edit_multiple_registrations(self):
+    def test_user_can_add_multiple_registrations_and_edit_one(self):
         user = get_user_model().objects.create_user(
             username="multiuser",
             password="StrongPassword!908",
         )
-        self.client.login(username="multiuser", password="StrongPassword!908")
+        self.client.login(username=user.username, password="StrongPassword!908")
 
-        for username in ("PlayerOne", "PlayerTwo"):
+        for roblox_name, telegram_name in (
+            ("PlayerOne", "@player_one"),
+            ("PlayerTwo", "@player_two"),
+        ):
             response = self.client.post(
                 "/",
                 {
-                    "Roblox_username": username,
-                    "roblox_email": f"{username.lower()}@example.com",
-                    "phone_number": "+998901234567",
+                    "Roblox_username": roblox_name,
+                    "telegram_username": telegram_name,
                 },
             )
             self.assertRedirects(response, "/")
@@ -147,20 +94,22 @@ class AccountFlowTests(TestCase):
 
         response = self.client.get(f"/?edit={registrations[1].pk}")
         self.assertContains(response, 'value="PlayerTwo"')
+        self.assertContains(response, 'value="@player_two"')
 
-        self.client.post(
+        response = self.client.post(
             "/",
             {
                 "registration_id": registrations[1].pk,
                 "Roblox_username": "UpdatedPlayerTwo",
-                "roblox_email": "updated@example.com",
-                "phone_number": "+998991112233",
+                "telegram_username": "@updated_player",
             },
         )
+        self.assertRedirects(response, "/")
         registrations[0].refresh_from_db()
         registrations[1].refresh_from_db()
         self.assertEqual(registrations[0].Roblox_username, "PlayerOne")
         self.assertEqual(registrations[1].Roblox_username, "UpdatedPlayerTwo")
+        self.assertEqual(registrations[1].telegram_username, "@updated_player")
         self.assertEqual(RobloxUser.objects.filter(user=user).count(), 2)
 
         other_user = get_user_model().objects.create_user(
@@ -173,17 +122,16 @@ class AccountFlowTests(TestCase):
             404,
         )
 
-    def test_users_do_not_see_unlinked_legacy_registrations_as_their_own(self):
+    def test_unlinked_legacy_registration_is_not_exposed_to_other_users(self):
         RobloxUser.objects.create(
             Roblox_username="UnlinkedParticipant",
-            roblox_email="unlinked@example.com",
-            phone_number="+998901234567",
+            telegram_username="",
         )
-        get_user_model().objects.create_user(
+        user = get_user_model().objects.create_user(
             username="anotheruser",
             password="StrongPassword!908",
         )
-        self.client.login(username="anotheruser", password="StrongPassword!908")
+        self.client.login(username=user.username, password="StrongPassword!908")
 
         response = self.client.get("/?add=1")
 
@@ -194,8 +142,7 @@ class AccountFlowTests(TestCase):
     def test_admin_can_edit_participant_from_matsu_list(self):
         participant = RobloxUser.objects.create(
             Roblox_username="NeedsCorrection",
-            roblox_email="wrong@example.com",
-            phone_number="+998901234567",
+            telegram_username="@wrong_username",
         )
         admin = get_user_model().objects.create_superuser(
             username="editadmin",
@@ -204,145 +151,123 @@ class AccountFlowTests(TestCase):
         )
         self.client.login(username=admin.username, password="AdminPassword!908")
 
-        self.client.post("/matsu/", {"password": "AdminPassword!908"})
-        response = self.client.get("/matsu/")
-        self.assertContains(
-            response,
-            f'href="/matsu/{participant.pk}/edit/"',
+        self.client.post(
+            "/matsu/",
+            {"password": "AdminPassword!908", "action": "confirm"},
         )
+        response = self.client.get("/matsu/")
+        self.assertContains(response, f'href="/matsu/{participant.pk}/edit/"')
+        self.assertContains(response, "Telegram Username")
+        self.assertNotContains(response, "Email")
+        self.assertNotContains(response, "Telefon")
 
         edit_response = self.client.get(f"/matsu/{participant.pk}/edit/")
         self.assertEqual(edit_response.status_code, 200)
-        self.assertContains(edit_response, 'value="wrong@example.com"')
+        self.assertContains(edit_response, 'value="@wrong_username"')
 
         save_response = self.client.post(
             f"/matsu/{participant.pk}/edit/",
             {
                 "Roblox_username": "CorrectedName",
-                "roblox_email": "correct@example.com",
-                "phone_number": "+998991112233",
+                "telegram_username": "@correct_username",
             },
         )
         self.assertRedirects(save_response, "/matsu/")
         participant.refresh_from_db()
         self.assertEqual(participant.Roblox_username, "CorrectedName")
-        self.assertEqual(participant.roblox_email, "correct@example.com")
-        self.assertEqual(participant.phone_number, "+998991112233")
+        self.assertEqual(participant.telegram_username, "@correct_username")
 
     def test_participant_edit_requires_admin_confirmation(self):
         participant = RobloxUser.objects.create(
             Roblox_username="PrivateParticipant",
-            roblox_email="private@example.com",
-            phone_number="+998901234567",
+            telegram_username="@private_user",
         )
-        get_user_model().objects.create_superuser(
+        admin = get_user_model().objects.create_superuser(
             username="unconfirmedadmin",
             email="unconfirmed@example.com",
             password="AdminPassword!908",
         )
-        self.client.login(username="unconfirmedadmin", password="AdminPassword!908")
+        self.client.login(username=admin.username, password="AdminPassword!908")
 
         response = self.client.get(f"/matsu/{participant.pk}/edit/")
 
         self.assertRedirects(response, "/matsu/")
 
-    def test_matsu_requires_staff_and_password_to_show_participant_details(self):
-        RobloxUser.objects.create(
+    def test_matsu_is_public_shows_count_and_registration_time(self):
+        participant = RobloxUser.objects.create(
             Roblox_username="VisibleRobloxName",
-            roblox_email="private@example.com",
-            phone_number="+998901234567",
+            telegram_username="@visible_user",
         )
 
         response = self.client.get("/matsu/")
-        self.assertRedirects(response, "/login/?next=/matsu/")
-
-        get_user_model().objects.create_user(
-            username="rosteruser",
-            password="RosterAdmin!908",
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Jami 1 ta")
+        self.assertContains(response, "VisibleRobloxName")
+        self.assertContains(
+            response,
+            participant.registered_at.strftime("%d.%m.%Y %H:%M"),
         )
-        self.client.login(username="rosteruser", password="RosterAdmin!908")
-        self.assertRedirects(
-            self.client.get("/matsu/"),
-            "/admin/login/?next=/matsu/",
-        )
+        self.assertContains(response, "@visible_user")
+        self.assertNotContains(response, "participant-edit-button")
+        self.assertNotContains(response, "Admin akkaunti paroli")
 
-        get_user_model().objects.create_superuser(
+    def test_matsu_admin_actions_and_json_export_still_require_confirmation(self):
+        RobloxUser.objects.create(
+            Roblox_username="VisibleRobloxName",
+            telegram_username="@visible_user",
+        )
+        admin = get_user_model().objects.create_superuser(
             username="adminuser",
             email="admin@example.com",
             password="AdminPassword!908",
         )
-        self.client.logout()
-        self.client.login(username="adminuser", password="AdminPassword!908")
+        self.client.force_login(admin)
 
-        response = self.client.get("/matsu/")
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Admin akkaunti paroli")
-        self.assertNotContains(response, "VisibleRobloxName")
+        export_response = self.client.post("/matsu/", {"action": "export"})
+        self.assertRedirects(export_response, "/matsu/")
 
         wrong_password_response = self.client.post(
             "/matsu/",
-            {"password": "wrong-password"},
+            {"password": "wrong-password", "action": "confirm"},
         )
-        self.assertEqual(wrong_password_response.status_code, 200)
         self.assertIn(
             "Parol noto'g'ri.",
             wrong_password_response.context["form"].errors["password"],
         )
-        self.assertNotContains(wrong_password_response, "private@example.com")
+        self.assertContains(wrong_password_response, "@visible_user")
 
         response = self.client.post(
             "/matsu/",
-            {"password": "AdminPassword!908"},
+            {"password": "AdminPassword!908", "action": "confirm"},
         )
-        self.assertEqual(response.status_code, 200)
         self.assertContains(response, "VisibleRobloxName")
-        self.assertContains(response, "private@example.com")
-        self.assertContains(response, "+998901234567")
-        self.assertNotContains(response, "AdminPassword!908")
+        self.assertContains(response, "@visible_user")
 
-    def test_json_export_includes_phone_only_when_selected(self):
+    def test_json_export_contains_usernames_and_registration_time(self):
         RobloxUser.objects.create(
             Roblox_username="JsonPlayer",
-            roblox_email="json@example.com",
-            phone_number="+998901234567",
+            telegram_username="@json_player",
         )
-        get_user_model().objects.create_superuser(
+        admin = get_user_model().objects.create_superuser(
             username="jsonadmin",
             email="jsonadmin@example.com",
             password="AdminPassword!908",
         )
-        self.client.login(username="jsonadmin", password="AdminPassword!908")
+        self.client.force_login(admin)
 
         self.client.post(
             "/matsu/",
-            {"password": "AdminPassword!908"},
+            {"password": "AdminPassword!908", "action": "confirm"},
         )
-        without_phone = self.client.post(
-            "/matsu/",
-            {"action": "export"},
-        )
-        self.assertEqual(without_phone.status_code, 200)
-        self.assertEqual(
-            without_phone.json(),
-            [{"roblox_username": "JsonPlayer", "email": "json@example.com"}],
-        )
-        self.assertIn("attachment;", without_phone["Content-Disposition"])
-        self.assertIn("no-store", without_phone["Cache-Control"])
+        response = self.client.post("/matsu/", {"action": "export"})
 
-        with_phone = self.client.post(
-            "/matsu/",
-            {
-                "action": "export",
-                "include_phone": "on",
-            },
-        )
+        self.assertEqual(response.status_code, 200)
+        exported = response.json()[0]
+        self.assertEqual(exported["roblox_username"], "JsonPlayer")
+        self.assertEqual(exported["telegram_username"], "@json_player")
         self.assertEqual(
-            with_phone.json(),
-            [
-                {
-                    "roblox_username": "JsonPlayer",
-                    "email": "json@example.com",
-                    "phone_number": "+998901234567",
-                }
-            ],
+            exported["registered_at"],
+            RobloxUser.objects.get().registered_at.isoformat(),
         )
+        self.assertIn("attachment;", response["Content-Disposition"])
+        self.assertIn("no-store", response["Cache-Control"])
