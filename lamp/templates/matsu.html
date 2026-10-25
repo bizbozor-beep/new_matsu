@@ -1,0 +1,913 @@
+<!doctype html>
+<html lang="uz">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Turnir Ishtirokchilari — Admin Boshqaruvi</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #090a10;
+            --bg-card: rgba(20, 24, 38, 0.75);
+            --bg-card-solid: #141826;
+            --bg-input: #0d0f18;
+            --primary: #00f0ff;
+            --primary-glow: rgba(0, 240, 255, 0.35);
+            --secondary: #ff0055;
+            --secondary-glow: rgba(255, 0, 85, 0.35);
+            --accent: #ffe600;
+            --accent-glow: rgba(255, 230, 0, 0.35);
+            --success: #00ff88;
+            --success-glow: rgba(0, 255, 136, 0.25);
+            --text-main: #f0f3f9;
+            --text-muted: #8c97ab;
+            --border-color: rgba(255, 255, 255, 0.08);
+            --border-highlight: rgba(0, 240, 255, 0.3);
+            --radius-lg: 20px;
+            --radius-md: 12px;
+            --radius-sm: 8px;
+            --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 30px 20px;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(255, 0, 85, 0.07) 0%, transparent 45%),
+                radial-gradient(circle at 90% 80%, rgba(0, 240, 255, 0.08) 0%, transparent 45%),
+                linear-gradient(180deg, rgba(9, 10, 16, 0.8) 0%, #090a10 100%);
+            background-attachment: fixed;
+            overflow-x: hidden;
+        }
+
+        /* Background ambient lights */
+        .ambient-light {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            z-index: 0;
+            background: 
+                radial-gradient(600px at 50% -100px, rgba(0, 240, 255, 0.12), transparent),
+                radial-gradient(800px at 50% 120%, rgba(255, 0, 85, 0.08), transparent);
+        }
+
+        .page-shell {
+            width: 100%;
+            max-width: 1080px;
+            display: flex;
+            flex-direction: column;
+            gap: 28px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Navigation Topbar */
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(20, 24, 38, 0.65);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border-color);
+            padding: 16px 28px;
+            border-radius: var(--radius-lg);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .brand {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 0.9rem;
+            color: var(--text-main);
+            text-decoration: none;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: var(--transition);
+        }
+
+        .brand span {
+            color: var(--primary);
+            text-shadow: 0 0 12px var(--primary-glow);
+        }
+
+        .brand:hover {
+            transform: translateY(-1px);
+        }
+
+        /* Buttons */
+        .button {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+            font-size: 0.92rem;
+            padding: 10px 22px;
+            border-radius: var(--radius-md);
+            border: none;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: var(--transition);
+        }
+
+        .button-secondary {
+            background: rgba(255, 255, 255, 0.04);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+        }
+
+        .button-secondary:hover {
+            background: rgba(255, 255, 255, 0.09);
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .button-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, #00a2ff 100%);
+            color: #050b14;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: 0 4px 20px var(--primary-glow);
+            padding: 14px 28px;
+        }
+
+        .button-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 28px rgba(0, 240, 255, 0.55);
+            background: linear-gradient(135deg, #33f3ff 0%, #1ab0ff 100%);
+        }
+
+        .button-primary:active {
+            transform: translateY(0);
+        }
+
+        .button-success {
+            background: linear-gradient(135deg, var(--success) 0%, #00b359 100%);
+            color: #03170d;
+            font-weight: 700;
+            box-shadow: 0 4px 20px var(--success-glow);
+        }
+
+        .button-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(0, 255, 136, 0.45);
+        }
+
+        /* Hero Header */
+        .hero {
+            text-align: center;
+            padding: 10px 0 5px;
+        }
+
+        .eyebrow {
+            font-size: 0.78rem;
+            font-weight: 800;
+            color: var(--secondary);
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            margin-bottom: 12px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 0, 85, 0.1);
+            padding: 5px 16px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 0, 85, 0.3);
+            box-shadow: 0 0 15px var(--secondary-glow);
+        }
+
+        .eyebrow::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background-color: var(--secondary);
+            border-radius: 50%;
+            display: inline-block;
+            box-shadow: 0 0 8px var(--secondary);
+        }
+
+        .hero h1 {
+            font-size: 2.6rem;
+            font-weight: 900;
+            margin-bottom: 10px;
+            background: linear-gradient(180deg, #ffffff 0%, #b8c7e0 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px;
+        }
+
+        .hero p {
+            color: var(--text-muted);
+            font-size: 1.05rem;
+            max-width: 580px;
+            margin: 0 auto;
+        }
+
+        /* Card Panels */
+        .registration-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 36px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .registration-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--secondary), var(--primary), var(--accent));
+        }
+
+        /* Auth Form (Password Confirmation) */
+        .auth-box {
+            max-width: 480px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .auth-box h2 {
+            font-size: 1.6rem;
+            font-weight: 800;
+            margin-bottom: 8px;
+            color: var(--text-main);
+        }
+
+        .auth-icon {
+            width: 64px;
+            height: 64px;
+            background: rgba(255, 0, 85, 0.1);
+            border: 1px solid rgba(255, 0, 85, 0.3);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            color: var(--secondary);
+            box-shadow: 0 0 25px var(--secondary-glow);
+        }
+
+        /* Section Title & Metrics Header */
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 24px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .dashboard-title-group h2 {
+            font-size: 1.6rem;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .badge-count {
+            background: rgba(0, 240, 255, 0.12);
+            color: var(--primary);
+            border: 1px solid var(--border-highlight);
+            font-size: 0.85rem;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: 700;
+        }
+
+        .session-timer {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            color: var(--accent);
+            background: rgba(255, 230, 0, 0.08);
+            border: 1px solid rgba(255, 230, 0, 0.25);
+            padding: 6px 14px;
+            border-radius: 30px;
+        }
+
+        /* Search Bar & Filters */
+        .controls-bar {
+            display: flex;
+            gap: 14px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .search-input-wrapper {
+            position: relative;
+            flex: 1;
+            min-width: 240px;
+        }
+
+        .search-input-wrapper svg {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            pointer-events: none;
+        }
+
+        .search-input {
+            width: 100%;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            padding: 12px 16px 12px 42px;
+            border-radius: var(--radius-md);
+            color: var(--text-main);
+            font-size: 0.95rem;
+            outline: none;
+            transition: var(--transition);
+        }
+
+        .search-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-glow);
+        }
+
+        /* Modern Table Styling */
+        .participant-table-wrap {
+            overflow-x: auto;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+            background: rgba(13, 15, 24, 0.6);
+            margin-bottom: 28px;
+        }
+
+        .participant-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.95rem;
+        }
+
+        .participant-table th {
+            background: rgba(255, 255, 255, 0.03);
+            color: var(--text-muted);
+            font-weight: 700;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border-color);
+            white-space: nowrap;
+        }
+
+        .participant-table td {
+            padding: 16px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            color: var(--text-main);
+            vertical-align: middle;
+        }
+
+        .participant-table tbody tr {
+            transition: var(--transition);
+        }
+
+        .participant-table tbody tr:hover {
+            background: rgba(0, 240, 255, 0.04);
+        }
+
+        .participant-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* Player Profile Tag inside Table */
+        .player-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+        }
+
+        .player-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 0.85rem;
+            color: #000;
+            text-shadow: none;
+        }
+
+        .phone-badge {
+            font-family: monospace;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 4px 8px;
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            font-size: 0.9rem;
+            color: var(--text-main);
+        }
+
+        /* Export Form Section */
+        .export-card {
+            background: rgba(13, 15, 24, 0.8);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            position: relative;
+        }
+
+        .export-card h3 {
+            font-size: 1.15rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-main);
+        }
+
+        .card-description {
+            color: var(--text-muted);
+            font-size: 0.92rem;
+            line-height: 1.5;
+        }
+
+        /* Custom Checkbox */
+        .checkbox-field {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 0.95rem;
+            cursor: pointer;
+            user-select: none;
+            color: var(--text-main);
+            padding: 8px 0;
+        }
+
+        .checkbox-field input[type="checkbox"] {
+            appearance: none;
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            cursor: pointer;
+            position: relative;
+            transition: var(--transition);
+            outline: none;
+        }
+
+        .checkbox-field input[type="checkbox"]:checked {
+            background: var(--primary);
+            border-color: var(--primary);
+            box-shadow: 0 0 10px var(--primary-glow);
+        }
+
+        .checkbox-field input[type="checkbox"]:checked::after {
+            content: '✓';
+            position: absolute;
+            color: #000;
+            font-size: 14px;
+            font-weight: 900;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        /* Form Controls for Password */
+        .registration-form {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .form-field {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            text-align: left;
+        }
+
+        .form-field label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .registration-form input[type="password"],
+        .registration-form input[type="text"] {
+            width: 100%;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            padding: 14px 16px;
+            border-radius: var(--radius-md);
+            color: var(--text-main);
+            font-size: 1rem;
+            outline: none;
+            transition: var(--transition);
+        }
+
+        .registration-form input[type="password"]:focus,
+        .registration-form input[type="text"]:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-glow);
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-muted);
+        }
+
+        .empty-state svg {
+            margin-bottom: 12px;
+            opacity: 0.5;
+        }
+
+        /* Django Error lists styling */
+        .errorlist {
+            list-style: none;
+            color: var(--secondary);
+            font-size: 0.85rem;
+            margin-top: 6px;
+        }
+
+        .errorlist li {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            padding: 16px 0 8px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* Responsive Breakpoints */
+        @media (max-width: 768px) {
+            body {
+                align-items: flex-start;
+                padding: 16px 12px 24px;
+                background-attachment: scroll;
+            }
+
+            .page-shell {
+                gap: 20px;
+            }
+
+            .registration-card {
+                width: 100%;
+                padding: 24px 18px;
+            }
+
+            .hero h1 {
+                font-size: clamp(1.7rem, 7vw, 2.2rem);
+                overflow-wrap: anywhere;
+            }
+
+            .dashboard-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+                margin-bottom: 18px;
+                padding-bottom: 16px;
+            }
+
+            .dashboard-title-group h2 {
+                flex-wrap: wrap;
+                gap: 8px;
+                font-size: 1.35rem;
+            }
+
+            .session-timer {
+                max-width: 100%;
+                flex-wrap: wrap;
+            }
+
+            .controls-bar,
+            .search-input-wrapper {
+                width: 100%;
+                min-width: 0;
+            }
+
+            .participant-table-wrap {
+                max-width: 100%;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .participant-table th, 
+            .participant-table td {
+                padding: 12px;
+                white-space: nowrap;
+            }
+
+            .export-card {
+                padding: 18px 16px;
+            }
+
+            .button-primary {
+                width: 100%;
+                min-height: 48px;
+                padding: 13px 16px;
+            }
+
+            .auth-box {
+                width: 100%;
+            }
+
+            .registration-form input[type="password"],
+            .registration-form input[type="text"] {
+                min-height: 48px;
+                font-size: 16px;
+            }
+
+            footer {
+                line-height: 1.5;
+            }
+        }
+
+        @media (max-width: 420px) {
+            body {
+                padding: 12px 10px 20px;
+            }
+
+            .topbar {
+                gap: 12px;
+                padding: 12px 14px;
+                border-radius: var(--radius-md);
+            }
+
+            .brand {
+                font-size: 0.66rem;
+                letter-spacing: 0;
+                gap: 5px;
+            }
+
+            .topbar > .button {
+                flex-shrink: 0;
+                padding: 9px 12px;
+            }
+
+            .hero h1 {
+                font-size: 1.65rem;
+            }
+
+            .hero p {
+                font-size: 0.96rem;
+                line-height: 1.5;
+            }
+
+            .registration-card {
+                padding: 20px 14px;
+                border-radius: var(--radius-md);
+            }
+
+            .dashboard-title-group h2 {
+                font-size: 1.2rem;
+            }
+
+            .badge-count {
+                font-size: 0.75rem;
+                padding: 4px 9px;
+            }
+
+            .participant-table {
+                min-width: 620px;
+            }
+
+            .export-card h3 {
+                align-items: flex-start;
+                font-size: 1rem;
+            }
+
+            .checkbox-field {
+                align-items: flex-start;
+                line-height: 1.45;
+            }
+
+            .checkbox-field input[type="checkbox"] {
+                flex: 0 0 20px;
+                margin-top: 2px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="ambient-light"></div>
+
+    <main class="page-shell">
+        <!-- Top Navigation -->
+        <header class="topbar">
+            <a class="brand" href="{% url 'home' %}">
+                ROBLOX <span>TOURNAMENT</span>
+            </a>
+            <a class="button button-secondary" href="{% url 'home' %}">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                Orqaga
+            </a>
+        </header>
+
+        <!-- Page Hero -->
+        <section class="hero">
+            <p class="eyebrow">ADMIN BO'LIMI</p>
+            <h1>Turnir Ishtirokchilari</h1>
+            <p>Ishtirokchilar ro'yxatini ko'rish hamda ma'lumotlarni eksport qilish boshqaruvi.</p>
+        </section>
+
+        <!-- Main Content Card -->
+        <section class="registration-card">
+            {% if confirmed %}
+                <!-- Admin Header Metrics -->
+                <div class="dashboard-header">
+                    <div class="dashboard-title-group">
+                        <h2>
+                            Ro'yxatdan o'tganlar
+                            <span class="badge-count">{{ participants|length }} ta ishtirokchi</span>
+                        </h2>
+                    </div>
+
+                    <div class="session-timer">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                        <span>Sessiya: 15 min aktiv</span>
+                    </div>
+                </div>
+
+                {% if participants %}
+                    <!-- Live Search Filter -->
+                    <div class="controls-bar">
+                        <div class="search-input-wrapper">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                            <input type="text" id="searchInput" class="search-input" placeholder="Ishtirokchini qidirish (Username, Email, Tel)..." onkeyup="filterParticipants()">
+                        </div>
+                    </div>
+
+                    <!-- Participants Data Table -->
+                    <div class="participant-table-wrap">
+                        <table class="participant-table" id="participantsTable">
+                            <thead>
+                                <tr>
+                                    <th>Roblox Username</th>
+                                    <th>Email</th>
+                                    <th>Telefon Raqami</th>
+                                    <th>Amal</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for participant in participants %}
+                                    <tr>
+                                        <td>
+                                            <div class="player-badge">
+                                                <div class="player-avatar">
+                                                    {{ participant.Roblox_username|slice:":1"|upper }}
+                                                </div>
+                                                <span>{{ participant.Roblox_username }}</span>
+                                            </div>
+                                        </td>
+                                        <td>{{ participant.roblox_email }}</td>
+                                        <td>
+                                            {% if participant.phone_number %}
+                                                <span class="phone-badge">{{ participant.phone_number }}</span>
+                                            {% else %}
+                                                <span style="color: var(--text-muted);">-</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <a class="button button-secondary participant-edit-button" href="{% url 'edit_participant' participant.pk %}">
+                                                Edit
+                                            </a>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- JSON Export Form -->
+                    <form method="post" class="export-card">
+                        {% csrf_token %}
+                        <h3>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                            JSON Faylni Yuklab Olish
+                        </h3>
+                        <p class="card-description">
+                            Ishtirokchilar ro'yxatini va ularning bog'lanish ma'lumotlarini JSON formatida yuklab olishingiz mumkin.
+                        </p>
+                        
+                        <label class="checkbox-field" for="include-phone">
+                            <input id="include-phone" type="checkbox" name="include_phone" checked>
+                            JSON faylga telefon raqamlarini ham kiritish
+                        </label>
+
+                        <div>
+                            <button class="button button-primary" type="submit" name="action" value="export">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                                JSON Yuklab Olish
+                            </button>
+                        </div>
+                    </form>
+                {% else %}
+                    <!-- Empty State -->
+                    <div class="empty-state">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                        <p class="card-description">Hozircha turnirga hech kim ro'yxatdan o'tmagan.</p>
+                    </div>
+                {% endif %}
+
+            {% else %}
+                <!-- Admin Password Confirmation Box -->
+                <div class="auth-box">
+                    <div class="auth-icon">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                    </div>
+                    <h2>Admin Tasdiqlash</h2>
+                    <p class="card-description" style="margin-bottom: 24px;">
+                        Ishtirokchilar ma'lumotlarini ko'rish uchun maxfiy admin parolini kiriting.
+                    </p>
+
+                    <form method="post" class="registration-form">
+                        {% csrf_token %}
+                        
+                        <div class="form-field">
+                            {{ form.as_p }}
+                        </div>
+
+                        <button class="button button-primary" type="submit" style="width: 100%; margin-top: 10px;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            Tasdiqlash va Ko'rish
+                        </button>
+                    </form>
+                </div>
+            {% endif %}
+        </section>
+
+        <!-- Footer -->
+        <footer>Roblox Tournament &copy; 2026. Admin Boshqaruv Tizimi.</footer>
+    </main>
+
+    <script>
+        // Simple search filtering for the admin table
+        function filterParticipants() {
+            const input = document.getElementById('searchInput');
+            const filter = input.value.toLowerCase();
+            const table = document.getElementById('participantsTable');
+            if (!table) return;
+            
+            const trs = table.getElementsByTagName('tr');
+
+            for (let i = 1; i < trs.length; i++) {
+                const tds = trs[i].getElementsByTagName('td');
+                let found = false;
+
+                for (let j = 0; j < tds.length; j++) {
+                    if (tds[j]) {
+                        const textValue = tds[j].textContent || tds[j].innerText;
+                        if (textValue.toLowerCase().indexOf(filter) > -1) {
+                            found = true;
+                            break;
+                        }
+                    }
+                }
+                trs[i].style.display = found ? "" : "none";
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="uz">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'lamp/styles.css' %}">
+    <title>Kirish</title>
+</head>
+<body>
+    <main class="page-shell auth-shell">
+        <section class="registration-card">
+            <a class="brand" href="{% url 'login' %}">ROBLOX <span>TOURNAMENT</span></a>
+            <p class="eyebrow">XUSH KELIBSIZ</p>
+            <h1>Akkauntga kirish</h1>
+            <p class="card-description">Davom etish uchun login va parolingizni kiriting.</p>
+            <form method="post" class="registration-form">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button class="button button-primary" type="submit">Kirish</button>
+            </form>
+            <p class="auth-link">Akkauntingiz yo'qmi? <a href="{% url 'signup' %}">Ro'yxatdan o'tish</a></p>
+        </section>
+    </main>
+</body>
+</html>

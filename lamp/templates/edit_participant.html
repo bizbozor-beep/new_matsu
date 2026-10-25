@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="uz">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'lamp/styles.css' %}">
+    <title>Ishtirokchi ma'lumotlarini tahrirlash</title>
+</head>
+<body>
+    <main class="page-shell auth-shell">
+        <section class="registration-card">
+            <a class="brand" href="{% url 'matsu' %}">ROBLOX <span>TOURNAMENT</span></a>
+            <p class="eyebrow">ADMIN BO'LIMI</p>
+            <h1>Ishtirokchini tahrirlash</h1>
+            <p class="card-description">{{ participant.Roblox_username }} ma'lumotlarini tahrirlang.</p>
+            <form method="post" class="registration-form">
+                {% csrf_token %}
+                {{ form.non_field_errors }}
+                {% for field in form %}
+                    <div class="form-field">
+                        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                        {{ field }}
+                        {{ field.errors }}
+                    </div>
+                {% endfor %}
+                <button class="button button-primary" type="submit">O'zgarishlarni saqlash</button>
+                <a class="button button-secondary" href="{% url 'matsu' %}">Bekor qilish</a>
+            </form>
+        </section>
+    </main>
+</body>
+</html>
