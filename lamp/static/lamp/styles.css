@@ -1,10 +1,15 @@
 :root {
     color-scheme: dark;
-    font-family: "Segoe UI", Arial, sans-serif;
+    font-family: "Segoe UI", Inter, Arial, sans-serif;
     background: #090b12;
     color: #f4f5fb;
     font-synthesis: none;
     text-rendering: optimizeLegibility;
+    --surface: #151824;
+    --surface-raised: #1b1f2d;
+    --border: rgb(255 255 255 / 10%);
+    --muted: #a6a9ba;
+    --accent: #a894ff;
 }
 
 * {
@@ -16,12 +21,14 @@ body {
     min-height: 100vh;
     margin: 0;
     background:
-        radial-gradient(ellipse at 50% 0, rgb(105 78 255 / 19%), transparent 48%),
+        radial-gradient(ellipse at 50% -10%, rgb(105 78 255 / 22%), transparent 52%),
+        radial-gradient(ellipse at 0 100%, rgb(0 190 255 / 7%), transparent 38%),
         #090b12;
 }
 
 a {
-    color: #b9aaff;
+    color: #c0b2ff;
+    text-underline-offset: 3px;
 }
 
 .page-shell {
@@ -94,10 +101,10 @@ p {
 .registration-card {
     max-width: 620px;
     padding: 32px;
-    border: 1px solid rgb(255 255 255 / 10%);
+    border: 1px solid var(--border);
     border-radius: 18px;
-    background: linear-gradient(145deg, #171a27, #11131c);
-    box-shadow: 0 24px 70px rgb(0 0 0 / 28%);
+    background: linear-gradient(145deg, rgb(27 30 44 / 96%), rgb(16 18 27 / 98%));
+    box-shadow: 0 28px 80px rgb(0 0 0 / 38%);
 }
 
 .registration-card h2 {
@@ -142,6 +149,14 @@ p {
     font: inherit;
 }
 
+.registration-form input:-webkit-autofill,
+.registration-form input:-webkit-autofill:hover,
+.registration-form input:-webkit-autofill:focus {
+    -webkit-text-fill-color: #fff;
+    box-shadow: 0 0 0 1000px #0d0f17 inset;
+    transition: background-color 9999s ease-out;
+}
+
 .form-field input:focus,
 .registration-form input:focus {
     border-color: #9b83ff;
@@ -157,6 +172,9 @@ p {
 }
 
 .button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     min-height: 48px;
     padding: 0 20px;
     border: 0;
@@ -165,6 +183,7 @@ p {
     font: inherit;
     font-weight: 700;
     cursor: pointer;
+    text-decoration: none;
     transition: transform 150ms ease, filter 150ms ease;
 }
 
@@ -181,6 +200,130 @@ p {
     min-height: 40px;
     border: 1px solid #343747;
     background: #171a27;
+}
+
+.auth-shell {
+    display: grid;
+    min-height: 100svh;
+    padding-top: 32px;
+    padding-bottom: 32px;
+    place-items: center;
+}
+
+.auth-shell .registration-card {
+    position: relative;
+    width: min(100%, 460px);
+    max-width: 460px;
+    padding: clamp(26px, 6vw, 42px);
+    overflow: hidden;
+    border-color: rgb(255 255 255 / 12%);
+    border-radius: 22px;
+    background:
+        radial-gradient(ellipse at 100% 0, rgb(138 106 255 / 14%), transparent 45%),
+        linear-gradient(145deg, #191c29, #11131c);
+    box-shadow: 0 32px 90px rgb(0 0 0 / 48%), 0 0 0 1px rgb(255 255 255 / 2%);
+}
+
+.auth-shell .registration-card::before {
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #7053ed, #bd7bff, #43d7ff);
+    content: "";
+}
+
+.auth-shell .brand {
+    display: inline-flex;
+    margin-bottom: 38px;
+    font-size: 14px;
+    letter-spacing: 1px;
+}
+
+.auth-shell .brand span {
+    color: var(--accent);
+}
+
+.auth-shell .eyebrow {
+    margin-bottom: 10px;
+    color: var(--accent);
+    font-size: 11px;
+    letter-spacing: 2px;
+}
+
+.auth-shell .registration-card h1 {
+    margin-bottom: 10px;
+    font-size: clamp(28px, 7vw, 36px);
+    letter-spacing: -0.7px;
+}
+
+.auth-shell .card-description {
+    margin-bottom: 26px;
+    font-size: 14px;
+}
+
+.auth-shell .registration-form {
+    gap: 17px;
+}
+
+.auth-shell .registration-form p {
+    gap: 8px;
+    color: #e5e6ef;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.auth-shell .registration-form input {
+    min-height: 50px;
+    border-color: #343747;
+    border-radius: 10px;
+    background: #0d0f17;
+    font-size: 16px;
+}
+
+.auth-shell .registration-form input:focus {
+    border-color: #a894ff;
+    box-shadow: 0 0 0 3px rgb(168 148 255 / 16%);
+}
+
+.auth-shell .registration-form .button-primary {
+    width: 100%;
+    min-height: 50px;
+    margin-top: 3px;
+    background: linear-gradient(110deg, #7555ef, #a365ed);
+    box-shadow: 0 10px 26px rgb(117 85 239 / 24%);
+}
+
+.auth-link {
+    margin: 24px 0 0;
+    color: var(--muted);
+    font-size: 14px;
+    text-align: center;
+}
+
+.auth-link a {
+    font-weight: 700;
+}
+
+.auth-shell .errorlist,
+.auth-shell ul.errorlist {
+    margin: 6px 0 0;
+    padding-left: 18px;
+    color: #ff9caa;
+    font-size: 13px;
+    font-weight: 400;
+}
+
+.auth-shell .registration-form p:has(.helptext) {
+    gap: 8px;
+}
+
+.auth-shell .helptext {
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 1.55;
 }
 
 .success-message {
@@ -268,27 +411,6 @@ p {
     accent-color: #8b68f5;
 }
 
-.auth-shell {
-    display: grid;
-    min-height: 100vh;
-    place-items: center;
-}
-
-.auth-shell .registration-card {
-    width: min(100%, 480px);
-}
-
-.auth-shell .brand {
-    display: inline-block;
-    margin-bottom: 42px;
-}
-
-.auth-link {
-    margin: 24px 0 0;
-    color: #a6a9ba;
-    text-align: center;
-}
-
 footer {
     padding: 34px 0;
     color: #777b8c;
@@ -297,6 +419,10 @@ footer {
 }
 
 @media (max-width: 600px) {
+    body {
+        background-attachment: scroll;
+    }
+
     .page-shell {
         width: min(100% - 28px, 1040px);
     }
@@ -307,5 +433,31 @@ footer {
 
     .registration-card {
         padding: 24px 20px;
+    }
+
+    .auth-shell {
+        min-height: 100svh;
+        padding-top: 20px;
+        padding-bottom: 20px;
+    }
+
+    .auth-shell .registration-card {
+        padding: 28px 22px;
+        border-radius: 18px;
+    }
+
+    .auth-shell .brand {
+        margin-bottom: 32px;
+        font-size: 12px;
+    }
+
+    .participant-table-wrap {
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+@media (max-width: 360px) {
+    .auth-shell .registration-card {
+        padding: 24px 18px;
     }
 }

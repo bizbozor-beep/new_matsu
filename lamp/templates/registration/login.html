@@ -4,22 +4,343 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     {% load static %}
-    <link rel="stylesheet" href="{% static 'lamp/styles.css' %}">
-    <title>Kirish</title>
+    <title>Kirish | Roblox Tournament</title>
+    <!-- Google Fonts for Gaming Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* ==========================================================
+           1. CSS VARIABLES & RESET
+           ========================================================== */
+        :root {
+            --bg-dark: #080b14;
+            --card-bg: rgba(15, 22, 41, 0.75);
+            --border-color: rgba(0, 240, 255, 0.18);
+            --border-glow: rgba(0, 240, 255, 0.5);
+            
+            --primary: #00f0ff;
+            --primary-hover: #00b8d4;
+            --accent-red: #ff4655;
+            --accent-purple: #7928ca;
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            
+            --font-heading: 'Orbitron', sans-serif;
+            --font-body: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-body);
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* ==========================================================
+           2. ANIMATED BACKGROUND & DECORATION
+           ========================================================== */
+        .bg-grid {
+            position: absolute;
+            inset: 0;
+            background-image: 
+                linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+            z-index: -2;
+        }
+
+        .glow-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(120px);
+            z-index: -1;
+            opacity: 0.5;
+            animation: pulse 8s infinite alternate ease-in-out;
+        }
+
+        .glow-orb-1 {
+            width: 400px;
+            height: 400px;
+            background: var(--primary);
+            top: -100px;
+            left: -100px;
+        }
+
+        .glow-orb-2 {
+            width: 450px;
+            height: 450px;
+            background: var(--accent-purple);
+            bottom: -150px;
+            right: -100px;
+            animation-delay: -4s;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1) translate(0, 0); opacity: 0.4; }
+            100% { transform: scale(1.15) translate(30px, -20px); opacity: 0.6; }
+        }
+
+        /* ==========================================================
+           3. MAIN CONTAINER & GLASS CARD
+           ========================================================== */
+        .page-shell {
+            width: 100%;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .registration-card {
+            width: 100%;
+            max-width: 460px;
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6),
+                        0 0 20px rgba(0, 240, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .registration-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary), var(--accent-purple), var(--accent-red));
+        }
+
+        /* ==========================================================
+           4. BRANDING & HEADER
+           ========================================================== */
+        .brand {
+            display: block;
+            text-decoration: none;
+            font-family: var(--font-heading);
+            font-weight: 900;
+            font-size: 1.5rem;
+            letter-spacing: 1.5px;
+            color: #ffffff;
+            text-align: center;
+            margin-bottom: 25px;
+            text-transform: uppercase;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+        }
+
+        .brand span {
+            color: var(--primary);
+            text-shadow: 0 0 15px rgba(0, 240, 255, 0.6);
+        }
+
+        .eyebrow {
+            font-family: var(--font-heading);
+            font-size: 0.75rem;
+            font-weight: 800;
+            letter-spacing: 2px;
+            color: var(--primary);
+            text-align: center;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+        }
+
+        h1 {
+            font-family: var(--font-heading);
+            font-size: 1.85rem;
+            font-weight: 800;
+            text-align: center;
+            color: #ffffff;
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+        }
+
+        .card-description {
+            font-size: 0.92rem;
+            color: var(--text-muted);
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        /* ==========================================================
+           5. FORM & DJANGO FORM STYLING
+           ========================================================== */
+        .registration-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Styling native Django form output (form.as_p) */
+        .registration-form p {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin: 0;
+            position: relative;
+        }
+
+        .registration-form label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-main);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+        .registration-form input[type="text"],
+        .registration-form input[type="password"],
+        .registration-form input[type="email"] {
+            width: 100%;
+            padding: 14px 18px;
+            background: rgba(10, 15, 29, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 12px;
+            color: #ffffff;
+            font-family: var(--font-body);
+            font-size: 0.95rem;
+            outline: none;
+            transition: all 0.25s ease;
+        }
+
+        .registration-form input:focus {
+            border-color: var(--primary);
+            background: rgba(10, 15, 29, 0.9);
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.25);
+        }
+
+        /* Help texts & Django errors */
+        .helptext {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .errorlist {
+            list-style: none;
+            color: var(--accent-red);
+            font-size: 0.82rem;
+            margin-top: 4px;
+            padding-left: 0;
+        }
+
+        /* ==========================================================
+           6. BUTTONS & ACTIONS
+           ========================================================== */
+        .button-primary {
+            margin-top: 10px;
+            padding: 15px;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--primary) 0%, #00a8ff 100%);
+            color: #040914;
+            font-family: var(--font-heading);
+            font-weight: 800;
+            font-size: 1rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(0, 240, 255, 0.35);
+        }
+
+        .button-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(0, 240, 255, 0.5);
+            background: linear-gradient(135deg, #33f3ff 0%, #00c3ff 100%);
+        }
+
+        .button-primary:active {
+            transform: translateY(0);
+        }
+
+        /* ==========================================================
+           7. FOOTER LINKS
+           ========================================================== */
+        .auth-link {
+            text-align: center;
+            margin-top: 25px;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .auth-link a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.2s ease;
+        }
+
+        .auth-link a:hover {
+            color: #ffffff;
+            text-decoration: underline;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 480px) {
+            .registration-card {
+                padding: 30px 20px;
+            }
+            h1 {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
 </head>
 <body>
+    <!-- Dynamic Glowing Background Effects -->
+    <div class="bg-grid"></div>
+    <div class="glow-orb glow-orb-1"></div>
+    <div class="glow-orb glow-orb-2"></div>
+
     <main class="page-shell auth-shell">
         <section class="registration-card">
-            <a class="brand" href="{% url 'login' %}">ROBLOX <span>TOURNAMENT</span></a>
-            <p class="eyebrow">XUSH KELIBSIZ</p>
+            <!-- Brand Logo -->
+            <a class="brand" href="{% url 'login' %}">
+                ROBLOX <span>TOURNAMENT</span>
+            </a>
+
+            <!-- Heading Section -->
+            <p class="eyebrow">Xush kelibsiz</p>
             <h1>Akkauntga kirish</h1>
             <p class="card-description">Davom etish uchun login va parolingizni kiriting.</p>
+
+            <!-- Form -->
             <form method="post" class="registration-form">
                 {% csrf_token %}
+                
+                <!-- Django Form Rendering -->
                 {{ form.as_p }}
-                <button class="button button-primary" type="submit">Kirish</button>
+
+                <!-- Submit Button -->
+                <button class="button button-primary" type="submit">
+                    Kirish <i class="fa-solid fa-arrow-right-to-bracket" style="margin-left: 8px;"></i>
+                </button>
             </form>
-            <p class="auth-link">Akkauntingiz yo'qmi? <a href="{% url 'signup' %}">Ro'yxatdan o'tish</a></p>
+
+            <!-- Registration Link -->
+            <p class="auth-link">
+                Akkauntingiz yo'qmi? <a href="{% url 'signup' %}">Ro'yxatdan o'tish</a>
+            </p>
         </section>
     </main>
 </body>
