@@ -484,16 +484,12 @@
             </a>
             <nav class="topbar-actions">
                 <a class="button button-secondary" href="{% url 'matsu' %}">Matsu</a>
-                <form method="post" action="{% url 'logout' %}" style="display: inline;">
-                    {% csrf_token %}
-                    <button class="button button-secondary" type="submit">Chiqish</button>
-                </form>
             </nav>
         </header>
 
         <section class="hero">
             <p class="eyebrow">TURNIRGA QO'SHILING</p>
-            <h1>Xush kelibsiz, {{ request.user.username }}!</h1>
+            <h1>Xush kelibsiz!</h1>
             <p>Roblox turnirida qatnashish uchun quyidagi formani to'ldiring.</p>
         </section>
 

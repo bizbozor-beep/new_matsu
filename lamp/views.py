@@ -1,9 +1,9 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.forms import UserCreationForm
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.db import models
 
 from .forms import MatsuPasswordForm, RobloxUserRegistrationForm
 from .models import RobloxUser
@@ -11,21 +11,17 @@ from .models import RobloxUser
 MATSU_CONFIRMATION_SESSION_KEY = "matsu_admin_confirmation"
 
 
-def signup(request):
-    if request.user.is_authenticated:
-        return redirect("home")
-
-    form = UserCreationForm(request.POST or None)
-    if request.method == "POST" and form.is_valid():
-        form.save()
-        return redirect("login")
-
-    return render(request, "registration/signup.html", {"form": form})
-
-
-@login_required
 def home(request):
-    registrations = RobloxUser.objects.filter(user=request.user).order_by("id")
+    if not request.session.session_key:
+        request.session.create()
+    session_key = request.session.session_key
+
+    registrations = RobloxUser.objects.filter(session_key=session_key).order_by("id")
+    if request.user.is_authenticated:
+        registrations = RobloxUser.objects.filter(
+            models.Q(session_key=session_key) | models.Q(user=request.user)
+        ).distinct().order_by("id")
+
     registration = None
     editing = False
     adding = request.GET.get("add") == "1"
@@ -45,7 +41,9 @@ def home(request):
         if form.is_valid():
             saved_registration = form.save(commit=False)
             if registration is None:
-                saved_registration.user = request.user
+                saved_registration.session_key = session_key
+                if request.user.is_authenticated:
+                    saved_registration.user = request.user
             saved_registration.save()
             message = (
                 "Ma'lumotlaringiz yangilandi."

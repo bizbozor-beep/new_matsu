@@ -11,6 +11,7 @@ class RobloxUser(models.Model):
         blank=True,
         related_name="tournament_registrations",
     )
+    session_key = models.CharField(max_length=40, blank=True, null=True, db_index=True)
     Roblox_username = models.CharField(max_length=100)
     telegram_username = models.CharField(max_length=100, blank=True, default="")
     registered_at = models.DateTimeField(default=timezone.now, editable=False)
